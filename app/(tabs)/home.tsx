@@ -292,11 +292,14 @@ If no opportunities match, respond with: "none"`;
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerContent}>
-          <Image 
-            source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
+          <View style={styles.logoContainer}>
+            <Image 
+              source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerLogoText}>VOLUNTARY</Text>
+          </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity 
               style={styles.filterButton} 
@@ -761,9 +764,20 @@ const styles = StyleSheet.create({
     alignItems: "center" as const,
     marginBottom: 12,
   },
+  logoContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 10,
+  },
   headerLogo: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
+  },
+  headerLogoText: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: "#FFFFFF",
+    letterSpacing: 1,
   },
   headerButtons: {
     flexDirection: "row" as const,
