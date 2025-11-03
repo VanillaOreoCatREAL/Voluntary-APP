@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X, Eye, EyeOff } from "lucide-react-native";
@@ -202,7 +203,7 @@ export default function AuthScreen() {
     const user = findUserByEmail(accounts, email);
 
     if (!user) {
-      setError("Couldn't find your Voltra Account with this email. Try creating a new account.");
+      setError("Couldn't find your VOLUNTARY Account with this email. Try creating a new account.");
       setIsLoading(false);
       return;
     }
@@ -394,7 +395,11 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.logoContainer}>
-            <Text style={styles.logo}>Voltra</Text>
+            <Image 
+              source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.formContainer}>
@@ -480,7 +485,11 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.logoContainer}>
-            <Text style={styles.logo}>Voltra</Text>
+            <Image 
+              source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.formContainer}>
@@ -606,14 +615,18 @@ export default function AuthScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.logoContainer}>
-          <Text style={styles.logo}>Voltra</Text>
+          <Image 
+            source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.formContainer}>
           {mode === "signin" ? (
             <>
               <Text style={styles.title}>Sign in</Text>
-              <Text style={styles.subtitle}>to continue to Voltra</Text>
+              <Text style={styles.subtitle}>to continue to VOLUNTARY</Text>
 
               <View style={styles.inputContainer}>
                 <TextInput
@@ -681,7 +694,7 @@ export default function AuthScreen() {
             </>
           ) : (
             <>
-              <Text style={styles.title}>Create your Voltra Account</Text>
+              <Text style={styles.title}>Create your VOLUNTARY Account</Text>
               <Text style={styles.subtitle}>Join students volunteering today</Text>
 
               <View style={styles.inputContainer}>
@@ -754,7 +767,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
 
               <Text style={styles.termsText}>
-                By creating an account, you agree to Voltra&apos;s Terms of Service and Privacy Policy
+                By creating an account, you agree to VOLUNTARY&apos;s Terms of Service and Privacy Policy
               </Text>
 
               <View style={styles.divider} />
@@ -787,11 +800,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 48,
   },
-  logo: {
-    fontSize: 48,
-    fontWeight: "800" as const,
-    color: Colors.light.tint,
-    letterSpacing: -1,
+  logoImage: {
+    width: 180,
+    height: 180,
   },
   formContainer: {
     backgroundColor: Colors.light.cardBackground,

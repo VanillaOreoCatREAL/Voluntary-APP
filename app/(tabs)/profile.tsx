@@ -415,7 +415,7 @@ export default function ProfileScreen() {
                     </View>
                     <Text style={styles.modalTitle}>Sign Out?</Text>
                     <Text style={styles.modalMessage}>
-                      Are you sure you want to sign out from Voltra?
+                      Are you sure you want to sign out from VOLUNTARY?
                     </Text>
                   </View>
 

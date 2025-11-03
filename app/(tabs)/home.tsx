@@ -292,7 +292,11 @@ If no opportunities match, respond with: "none"`;
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Voltra</Text>
+          <Image 
+            source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/w74f15seyjkcc8ox04far" }}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
           <View style={styles.headerButtons}>
             <TouchableOpacity 
               style={styles.filterButton} 
@@ -757,11 +761,9 @@ const styles = StyleSheet.create({
     alignItems: "center" as const,
     marginBottom: 12,
   },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: "800" as const,
-    color: "#FFFFFF",
-    letterSpacing: -1,
+  headerLogo: {
+    width: 60,
+    height: 60,
   },
   headerButtons: {
     flexDirection: "row" as const,
