@@ -290,7 +290,7 @@ If no opportunities match, respond with: "none"`;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <Image 
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.light.tint,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 10,
     borderBottomWidth: 0,
     shadowColor: Colors.light.darkBlue,
     shadowOffset: { width: 0, height: 4 },
@@ -762,7 +762,7 @@ const styles = StyleSheet.create({
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
-    marginBottom: 12,
+    marginBottom: 0,
   },
   logoContainer: {
     flexDirection: "row" as const,
@@ -770,11 +770,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   headerLogo: {
-    width: 80,
-    height: 80,
+    width: 50,
+    height: 50,
   },
   headerLogoText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "700" as const,
     color: "#FFFFFF",
     letterSpacing: 1,
