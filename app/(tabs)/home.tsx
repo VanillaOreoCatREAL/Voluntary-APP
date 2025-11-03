@@ -13,7 +13,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MapPin, Clock, Users, CheckCircle, X, ExternalLink, Calendar, Building2, User, LogIn, Star, RefreshCw, Filter, Grid3x3 } from "lucide-react-native";
+import { MapPin, Clock, Users, CheckCircle, X, ExternalLink, Calendar, User, LogIn, Star, RefreshCw, Filter, Grid3x3, Briefcase } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
 import Colors from "@/constants/colors";
@@ -79,7 +79,9 @@ function OpportunityCard({ opportunity, onPress, isUserOrganization = false }: O
           <Text style={styles.tagText}>{opportunity.category}</Text>
         </View>
         <View style={styles.tag}>
-          <Text style={styles.tagText}>{opportunity.type}</Text>
+          <Text style={styles.tagText}>
+            {opportunity.type === "in-person" ? "In-Person" : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
+          </Text>
         </View>
       </View>
 
@@ -103,7 +105,7 @@ export default function HomeScreen() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<VolunteerOpportunity | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<"all" | "new" | "preferred">("all");
+  const [selectedFilter, setSelectedFilter] = useState<"all" | "new" | "preferred" | "my-posts">("all");
   const slideAnim = useState(new Animated.Value(400))[0];
   const spinValue = useState(new Animated.Value(0))[0];
   const insets = useSafeAreaInsets();
@@ -135,14 +137,14 @@ export default function HomeScreen() {
       category: posting.category,
       description: posting.description,
       requirements: [],
-      postedDate: new Date(posting.postedDate).toLocaleDateString(),
+      postedDate: posting.postedDate,
       image: posting.images?.[0],
       applicants: 0,
       dates: posting.dates,
       startTime: posting.startTime,
+      endTime: posting.endTime,
       website: posting.website,
       organizerName: posting.organizerName,
-      companyName: posting.companyName,
     } as VolunteerOpportunity)), ...opportunities];
   }, [organizationPostings]);
 
@@ -241,17 +243,28 @@ If no opportunities match, respond with: "none"`;
     });
   }, [allOpportunities]);
 
+  const myPosts = useMemo(() => {
+    if (!user?.email) return [];
+    return allOpportunities.filter(opp => isUserPosting(opp));
+  }, [allOpportunities, user?.email, isUserPosting]);
+
   const filteredOpportunities = useMemo(() => {
     switch (selectedFilter) {
       case "new":
         return newPosts;
       case "preferred":
-        return preferredOpportunities;
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        return preferredOpportunities.filter(opp => {
+          const postDate = new Date(opp.postedDate).getTime();
+          return postDate > oneDayAgo;
+        });
+      case "my-posts":
+        return myPosts;
       case "all":
       default:
         return allOpportunities;
     }
-  }, [selectedFilter, newPosts, preferredOpportunities, allOpportunities]);
+  }, [selectedFilter, newPosts, preferredOpportunities, myPosts, allOpportunities]);
 
   useEffect(() => {
     if (filterVisible) {
@@ -270,7 +283,7 @@ If no opportunities match, respond with: "none"`;
     }
   }, [filterVisible, slideAnim]);
 
-  const handleFilterSelect = (filter: "all" | "new" | "preferred") => {
+  const handleFilterSelect = (filter: "all" | "new" | "preferred" | "my-posts") => {
     setSelectedFilter(filter);
     setFilterVisible(false);
   };
@@ -433,11 +446,13 @@ If no opportunities match, respond with: "none"`;
                   <Text style={styles.sectionHeaderText}>
                     {selectedFilter === "new" && "New Posts (Last 24h)"}
                     {selectedFilter === "preferred" && "Preferred For You"}
+                    {selectedFilter === "my-posts" && "My Posts"}
                   </Text>
                 </View>
                 <Text style={styles.sectionSubtext}>
                   {selectedFilter === "new" && "Fresh opportunities posted in the last 24 hours"}
-                  {selectedFilter === "preferred" && `Based on your interests: ${userInterests.slice(0, 3).join(", ")}${userInterests.length > 3 ? ` and ${userInterests.length - 3} more` : ""}`}
+                  {selectedFilter === "preferred" && "New posts matching your interests from the last 24 hours"}
+                  {selectedFilter === "my-posts" && "Posts from your organizations"}
                 </Text>
                 {filteredOpportunities.length === 0 ? (
                   <View style={styles.emptyFilterState}>
@@ -529,12 +544,31 @@ If no opportunities match, respond with: "none"`;
                       Preferred Posts
                     </Text>
                     <Text style={[styles.filterOptionSubtext, selectedFilter === "preferred" && styles.filterOptionSubtextSelected]}>
-                      Matches your interests ({preferredOpportunities.length})
+                      New posts matching your interests
                     </Text>
                   </View>
                 </TouchableOpacity>
               )}
 
+              {isAuthenticated && myPosts.length > 0 && (
+                <TouchableOpacity 
+                  style={[styles.filterOption, selectedFilter === "my-posts" && styles.filterOptionSelected]}
+                  onPress={() => handleFilterSelect("my-posts")}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.filterOptionIcon}>
+                    <Briefcase size={20} color={selectedFilter === "my-posts" ? "#FFFFFF" : "#10B981"} />
+                  </View>
+                  <View style={styles.filterOptionTextContainer}>
+                    <Text style={[styles.filterOptionText, selectedFilter === "my-posts" && styles.filterOptionTextSelected]}>
+                      My Posts
+                    </Text>
+                    <Text style={[styles.filterOptionSubtext, selectedFilter === "my-posts" && styles.filterOptionSubtextSelected]}>
+                      Posts from your organizations ({myPosts.length})
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
 
             </View>
           </Animated.View>
@@ -614,7 +648,9 @@ function OpportunityDetailModal({ opportunity, visible, onClose }: OpportunityDe
                 <Clock size={18} color={Colors.light.tint} />
                 <View style={styles.detailInfoContent}>
                   <Text style={styles.detailInfoLabel}>Type</Text>
-                  <Text style={styles.detailInfoValue}>{opportunity.type}</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {opportunity.type === "in-person" ? "In-Person" : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
+                  </Text>
                 </View>
               </View>
 
@@ -650,8 +686,10 @@ function OpportunityDetailModal({ opportunity, visible, onClose }: OpportunityDe
                 <View style={styles.detailInfoItem}>
                   <Clock size={18} color={Colors.light.tint} />
                   <View style={styles.detailInfoContent}>
-                    <Text style={styles.detailInfoLabel}>Start Time</Text>
-                    <Text style={styles.detailInfoValue}>{opportunity.startTime}</Text>
+                    <Text style={styles.detailInfoLabel}>Time</Text>
+                    <Text style={styles.detailInfoValue}>
+                      {opportunity.startTime}{opportunity.endTime ? ` - ${opportunity.endTime}` : ""}
+                    </Text>
                   </View>
                 </View>
               )}
@@ -666,15 +704,7 @@ function OpportunityDetailModal({ opportunity, visible, onClose }: OpportunityDe
                 </View>
               )}
 
-              {opportunity.companyName && (
-                <View style={styles.detailInfoItem}>
-                  <Building2 size={18} color={Colors.light.tint} />
-                  <View style={styles.detailInfoContent}>
-                    <Text style={styles.detailInfoLabel}>Company</Text>
-                    <Text style={styles.detailInfoValue}>{opportunity.companyName}</Text>
-                  </View>
-                </View>
-              )}
+
             </View>
 
             {opportunity.website && (

@@ -13,10 +13,10 @@ export type OrganizationPosting = {
   duration: string;
   dates?: string;
   startTime?: string;
+  endTime?: string;
   website?: string;
   images?: string[];
   organizerName: string;
-  companyName: string;
   postedDate: string;
 };
 

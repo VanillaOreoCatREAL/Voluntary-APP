@@ -20,9 +20,9 @@ export interface VolunteerOpportunity {
   applicants: number;
   dates?: string;
   startTime?: string;
+  endTime?: string;
   website?: string;
   organizerName?: string;
-  companyName?: string;
 }
 
 export const organizations: Organization[] = [];

@@ -12,7 +12,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, Building2, X, MapPin, Trash2, Edit2 } from "lucide-react-native";
@@ -23,6 +22,20 @@ import { useOrganizations, type Organization, type OrganizationPosting } from "@
 import { useUser } from "@/contexts/UserContext";
 
 const DEFAULT_LOGO = "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200";
+
+const SUGGESTED_CATEGORIES = [
+  "Healthcare",
+  "Education",
+  "Technology",
+  "Environment",
+  "Community Service",
+  "Animal Welfare",
+  "Arts & Culture",
+  "Youth Programs",
+  "Senior Care",
+  "Disaster Relief",
+  "Sports & Fitness",
+];
 
 export default function OrganizationsScreen() {
   const insets = useSafeAreaInsets();
@@ -249,7 +262,9 @@ function PostingItem({ posting, onEdit, onDelete }: PostingItemProps) {
             <Text style={styles.postingMetaText}>{posting.location}</Text>
           </View>
           <View style={styles.postingTag}>
-            <Text style={styles.postingTagText}>{posting.type}</Text>
+            <Text style={styles.postingTagText}>
+              {posting.type === "in-person" ? "In-Person" : posting.type.charAt(0).toUpperCase() + posting.type.slice(1)}
+            </Text>
           </View>
         </View>
       </View>
@@ -280,10 +295,11 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
   const [duration, setDuration] = useState("");
   const [dates, setDates] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [website, setWebsite] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [organizerName, setOrganizerName] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -299,7 +315,7 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
   };
 
   const handleSubmit = () => {
-    if (!title.trim() || !description.trim() || !location.trim() || !category.trim() || !duration.trim() || !organizerName.trim() || !companyName.trim()) {
+    if (!title.trim() || !description.trim() || !location.trim() || !category.trim() || !duration.trim() || !organizerName.trim()) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
@@ -313,10 +329,10 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
       duration,
       dates: dates || undefined,
       startTime: startTime || undefined,
+      endTime: endTime || undefined,
       website: website || undefined,
       images: images.length > 0 ? images : undefined,
       organizerName,
-      companyName,
     });
 
     setTitle("");
@@ -327,11 +343,15 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
     setDuration("");
     setDates("");
     setStartTime("");
+    setEndTime("");
     setWebsite("");
     setImages([]);
     setOrganizerName("");
-    setCompanyName("");
   };
+
+  const filteredCategories = SUGGESTED_CATEGORIES.filter(cat => 
+    cat.toLowerCase().includes(category.toLowerCase())
+  );
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -349,7 +369,7 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <Text style={styles.inputLabel}>Title *</Text>
             <TextInput
               style={styles.input}
@@ -370,12 +390,12 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
               numberOfLines={4}
             />
 
-            <Text style={styles.inputLabel}>Location *</Text>
+            <Text style={styles.inputLabel}>Location (Address) *</Text>
             <TextInput
               style={styles.input}
               value={location}
               onChangeText={setLocation}
-              placeholder="City, State or Remote"
+              placeholder="123 Main St, City, State ZIP"
               placeholderTextColor={Colors.light.textSecondary}
             />
 
@@ -388,20 +408,44 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
                   onPress={() => setType(t)}
                 >
                   <Text style={[styles.typeButtonText, type === t && styles.typeButtonTextActive]}>
-                    {t}
+                    {t === "in-person" ? "In-Person" : t.charAt(0).toUpperCase() + t.slice(1)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <Text style={styles.inputLabel}>Category *</Text>
-            <TextInput
-              style={styles.input}
-              value={category}
-              onChangeText={setCategory}
-              placeholder="e.g., Healthcare, Education, Environment"
-              placeholderTextColor={Colors.light.textSecondary}
-            />
+            <View>
+              <TextInput
+                style={styles.input}
+                value={category}
+                onChangeText={(text) => {
+                  setCategory(text);
+                  setShowCategoryDropdown(text.length > 0);
+                }}
+                placeholder="Type to search or create custom"
+                placeholderTextColor={Colors.light.textSecondary}
+                onFocus={() => setShowCategoryDropdown(true)}
+              />
+              {showCategoryDropdown && filteredCategories.length > 0 && (
+                <View style={styles.categoryDropdown}>
+                  <ScrollView style={styles.categoryDropdownScroll}>
+                    {filteredCategories.map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={styles.categoryItem}
+                        onPress={() => {
+                          setCategory(cat);
+                          setShowCategoryDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.categoryItemText}>{cat}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
 
             <Text style={styles.inputLabel}>Duration *</Text>
             <TextInput
@@ -417,7 +461,7 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
               style={styles.input}
               value={dates}
               onChangeText={setDates}
-              placeholder="e.g., Starting Jan 15, 2025"
+              placeholder="e.g., January 15, 2025 or tap to select"
               placeholderTextColor={Colors.light.textSecondary}
             />
 
@@ -427,6 +471,15 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
               value={startTime}
               onChangeText={setStartTime}
               placeholder="e.g., 9:00 AM"
+              placeholderTextColor={Colors.light.textSecondary}
+            />
+
+            <Text style={styles.inputLabel}>End Time</Text>
+            <TextInput
+              style={styles.input}
+              value={endTime}
+              onChangeText={setEndTime}
+              placeholder="e.g., 5:00 PM"
               placeholderTextColor={Colors.light.textSecondary}
             />
 
@@ -441,6 +494,7 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
             />
 
             <Text style={styles.inputLabel}>Images</Text>
+            <Text style={styles.inputHelper}>Add pictures of your past work or relevant activities</Text>
             <TouchableOpacity style={styles.imageAddButton} onPress={handlePickImage}>
               <Plus size={20} color={Colors.light.tint} />
               <Text style={styles.imageAddButtonText}>Add Image</Text>
@@ -467,15 +521,6 @@ function CreatePostingModal({ visible, onClose, onCreate }: CreatePostingModalPr
               value={organizerName}
               onChangeText={setOrganizerName}
               placeholder="Your name"
-              placeholderTextColor={Colors.light.textSecondary}
-            />
-
-            <Text style={styles.inputLabel}>Company Name *</Text>
-            <TextInput
-              style={styles.input}
-              value={companyName}
-              onChangeText={setCompanyName}
-              placeholder="Organization name"
               placeholderTextColor={Colors.light.textSecondary}
             />
             </ScrollView>
@@ -511,10 +556,11 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
   const [duration, setDuration] = useState("");
   const [dates, setDates] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [website, setWebsite] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [organizerName, setOrganizerName] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   useEffect(() => {
     if (posting) {
@@ -526,10 +572,10 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
       setDuration(posting.duration);
       setDates(posting.dates || "");
       setStartTime(posting.startTime || "");
+      setEndTime(posting.endTime || "");
       setWebsite(posting.website || "");
       setImages(posting.images || []);
       setOrganizerName(posting.organizerName);
-      setCompanyName(posting.companyName);
     }
   }, [posting]);
 
@@ -547,7 +593,7 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
   };
 
   const handleSubmit = () => {
-    if (!title.trim() || !description.trim() || !location.trim() || !category.trim() || !duration.trim() || !organizerName.trim() || !companyName.trim()) {
+    if (!title.trim() || !description.trim() || !location.trim() || !category.trim() || !duration.trim() || !organizerName.trim()) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
@@ -561,12 +607,16 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
       duration,
       dates: dates || undefined,
       startTime: startTime || undefined,
+      endTime: endTime || undefined,
       website: website || undefined,
       images: images.length > 0 ? images : undefined,
       organizerName,
-      companyName,
     });
   };
+
+  const filteredCategories = SUGGESTED_CATEGORIES.filter(cat => 
+    cat.toLowerCase().includes(category.toLowerCase())
+  );
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -584,7 +634,7 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <Text style={styles.inputLabel}>Title *</Text>
               <TextInput
                 style={styles.input}
@@ -605,12 +655,12 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
                 numberOfLines={4}
               />
 
-              <Text style={styles.inputLabel}>Location *</Text>
+              <Text style={styles.inputLabel}>Location (Address) *</Text>
               <TextInput
                 style={styles.input}
                 value={location}
                 onChangeText={setLocation}
-                placeholder="City, State or Remote"
+                placeholder="123 Main St, City, State ZIP"
                 placeholderTextColor={Colors.light.textSecondary}
               />
 
@@ -623,20 +673,44 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
                     onPress={() => setType(t)}
                   >
                     <Text style={[styles.typeButtonText, type === t && styles.typeButtonTextActive]}>
-                      {t}
+                      {t === "in-person" ? "In-Person" : t.charAt(0).toUpperCase() + t.slice(1)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               <Text style={styles.inputLabel}>Category *</Text>
-              <TextInput
-                style={styles.input}
-                value={category}
-                onChangeText={setCategory}
-                placeholder="e.g., Healthcare, Education, Environment"
-                placeholderTextColor={Colors.light.textSecondary}
-              />
+              <View>
+                <TextInput
+                  style={styles.input}
+                  value={category}
+                  onChangeText={(text) => {
+                    setCategory(text);
+                    setShowCategoryDropdown(text.length > 0);
+                  }}
+                  placeholder="Type to search or create custom"
+                  placeholderTextColor={Colors.light.textSecondary}
+                  onFocus={() => setShowCategoryDropdown(true)}
+                />
+                {showCategoryDropdown && filteredCategories.length > 0 && (
+                  <View style={styles.categoryDropdown}>
+                    <ScrollView style={styles.categoryDropdownScroll}>
+                      {filteredCategories.map((cat) => (
+                        <TouchableOpacity
+                          key={cat}
+                          style={styles.categoryItem}
+                          onPress={() => {
+                            setCategory(cat);
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.categoryItemText}>{cat}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
 
               <Text style={styles.inputLabel}>Duration *</Text>
               <TextInput
@@ -652,7 +726,7 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
                 style={styles.input}
                 value={dates}
                 onChangeText={setDates}
-                placeholder="e.g., Starting Jan 15, 2025"
+                placeholder="e.g., January 15, 2025 or tap to select"
                 placeholderTextColor={Colors.light.textSecondary}
               />
 
@@ -662,6 +736,15 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
                 value={startTime}
                 onChangeText={setStartTime}
                 placeholder="e.g., 9:00 AM"
+                placeholderTextColor={Colors.light.textSecondary}
+              />
+
+              <Text style={styles.inputLabel}>End Time</Text>
+              <TextInput
+                style={styles.input}
+                value={endTime}
+                onChangeText={setEndTime}
+                placeholder="e.g., 5:00 PM"
                 placeholderTextColor={Colors.light.textSecondary}
               />
 
@@ -676,6 +759,7 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
               />
 
               <Text style={styles.inputLabel}>Images</Text>
+              <Text style={styles.inputHelper}>Add pictures of your past work or relevant activities</Text>
               <TouchableOpacity style={styles.imageAddButton} onPress={handlePickImage}>
                 <Plus size={20} color={Colors.light.tint} />
                 <Text style={styles.imageAddButtonText}>Add Image</Text>
@@ -702,15 +786,6 @@ function EditPostingModal({ visible, posting, onClose, onSave }: EditPostingModa
                 value={organizerName}
                 onChangeText={setOrganizerName}
                 placeholder="Your name"
-                placeholderTextColor={Colors.light.textSecondary}
-              />
-
-              <Text style={styles.inputLabel}>Company Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={companyName}
-                onChangeText={setCompanyName}
-                placeholder="Organization name"
                 placeholderTextColor={Colors.light.textSecondary}
               />
             </ScrollView>
@@ -982,7 +1057,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     maxHeight: "90%",
-    width: 320,
+    width: 350,
     borderWidth: 3,
     borderColor: Colors.light.tint,
     shadowColor: "#000",
@@ -1018,6 +1093,12 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
     marginBottom: 8,
   },
+  inputHelper: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginBottom: 8,
+    fontStyle: "italic",
+  },
   input: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -1032,7 +1113,6 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: "top",
   },
-
   typeButtons: {
     flexDirection: "row",
     gap: 8,
@@ -1056,10 +1136,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500" as const,
     color: Colors.light.text,
-    textTransform: "capitalize",
   },
   typeButtonTextActive: {
     color: "#FFFFFF",
+  },
+  categoryDropdown: {
+    position: "absolute",
+    top: 54,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    borderRadius: 8,
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  categoryDropdownScroll: {
+    maxHeight: 200,
+  },
+  categoryItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  categoryItemText: {
+    fontSize: 14,
+    color: Colors.light.text,
   },
   imageAddButton: {
     flexDirection: "row",
